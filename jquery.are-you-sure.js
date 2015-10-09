@@ -108,11 +108,32 @@
           return false; // break
         }
       });
-      
+
+      // ckeditor
+      if (typeof (evt.editor) !== 'undefined') {
+        if (CKEDITOR.instances[evt.editor.name].checkDirty()) {
+          setDirtyStatus($("#" + evt.editor.name).parents('form'), true);
+          return;
+        }else{
+          setDirtyStatus($("#" + evt.editor.name).parents('form'), false);
+        }
+      }
+
       setDirtyStatus($form, isDirty);
     };
 
     var initForm = function($form) {
+      //ckeditor
+      if (typeof(CKEDITOR) !== 'undefined') {
+        CKEDITOR.on('instanceReady', function () {
+          for (var instanceName in CKEDITOR.instances) {
+            CKEDITOR.instances[instanceName].removeListener("change", checkForm);
+            CKEDITOR.instances[instanceName].on("change", checkForm);
+            CKEDITOR.instances[instanceName].removeListener("keyup", checkForm);
+            CKEDITOR.instances[instanceName].document.on("keyup", checkForm);
+          }
+        });
+      }
       var fields = $form.find(settings.fieldSelector);
       $(fields).each(function() { storeOrigValue($(this)); });
       $(fields).unbind(settings.fieldEvents, checkForm);
@@ -151,7 +172,7 @@
 
     var reinitialize = function() {
       initForm($(this));
-    }
+    };
 
     if (!settings.silent && !window.aysUnloadSet) {
       window.aysUnloadSet = true;
